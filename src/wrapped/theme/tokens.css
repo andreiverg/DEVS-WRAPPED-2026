@@ -1,0 +1,10 @@
+:root {
+  color-scheme: light dark;
+}
+
+.wrapped-canvas-stage,
+.wrapped-canvas-stage *,
+.wrapped-canvas-stage *::before,
+.wrapped-canvas-stage *::after {
+  box-sizing: border-box;
+}
