@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import gsap from "gsap";
 import { PixelBackground } from "./PixelBackground";
 import { RetroCounter } from "./RetroCounter";
+import { Caption, Blurb } from "./Caption";
 import { applyEnterExit, useSlideTimeline } from "../engine/Timeline";
 
 interface StatRevealProps {
@@ -44,7 +45,7 @@ export function StatReveal({ durationMs, label, value, suffix = "", caption }: S
   }, durationMs);
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         style={{
           position: "relative",
@@ -59,11 +60,17 @@ export function StatReveal({ durationMs, label, value, suffix = "", caption }: S
           textAlign: "center",
         }}
       >
-        <div ref={labelRef}>{label}</div>
+        <div ref={labelRef}>
+          <Caption>{label}</Caption>
+        </div>
         <div ref={counterWrapRef}>
           <RetroCounter value={value} progress={progress} suffix={suffix} size="hero" />
         </div>
-        {caption ? <div ref={captionRef}>{caption}</div> : null}
+        {caption ? (
+          <div ref={captionRef}>
+            <Blurb>{caption}</Blurb>
+          </div>
+        ) : null}
       </div>
     </PixelBackground>
   );

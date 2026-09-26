@@ -2,6 +2,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
 import { GlitchText } from "../components/GlitchText";
+import { Caption } from "../components/Caption";
 import { applyEnterExit, useSlideTimeline } from "../engine/Timeline";
 import type { SlideProps } from "../engine/SlideRegistry";
 
@@ -18,7 +19,7 @@ export function MostActiveMonthSlide({ data, durationMs }: SlideProps) {
   }, durationMs);
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         style={{
           position: "relative",
@@ -33,12 +34,14 @@ export function MostActiveMonthSlide({ data, durationMs }: SlideProps) {
           textAlign: "center",
         }}
       >
-        <div ref={labelRef}>Your most active month was</div>
+        <div ref={labelRef}>
+          <Caption>Your most active month was</Caption>
+        </div>
         <div ref={valueRef}>
           {hasMonth ? (
-            <GlitchText fontSize={48}>{data.mostActiveMonth as string}</GlitchText>
+            <GlitchText durationMs={durationMs} fontSize={56}>{data.mostActiveMonth as string}</GlitchText>
           ) : (
-            <GlitchText fontSize={32}>Still to be written</GlitchText>
+            <GlitchText durationMs={durationMs} fontSize={38}>Still to be written</GlitchText>
           )}
         </div>
       </div>

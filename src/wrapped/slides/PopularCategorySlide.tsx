@@ -2,6 +2,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
 import { GlitchText } from "../components/GlitchText";
+import { Caption, Blurb } from "../components/Caption";
 import { applyEnterExit, useSlideTimeline } from "../engine/Timeline";
 import { CATEGORY_LABEL, CATEGORY_QUIP } from "../data/categoryCopy";
 import type { SlideProps } from "../engine/SlideRegistry";
@@ -20,7 +21,7 @@ export function PopularCategorySlide({ data, durationMs }: SlideProps) {
   }, durationMs);
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         style={{
           position: "relative",
@@ -35,12 +36,14 @@ export function PopularCategorySlide({ data, durationMs }: SlideProps) {
           textAlign: "center",
         }}
       >
-        <div ref={labelRef}>Our most popular events were</div>
+        <div ref={labelRef}>
+          <Caption>Our most popular events were</Caption>
+        </div>
         <div ref={nameRef}>
-          <GlitchText fontSize={44}>{CATEGORY_LABEL[data.mostPopularCategory]}</GlitchText>
+          <GlitchText durationMs={durationMs} fontSize={52}>{CATEGORY_LABEL[data.mostPopularCategory]}</GlitchText>
         </div>
         <div ref={quipRef} style={{ maxWidth: "70%" }}>
-          {CATEGORY_QUIP[data.mostPopularCategory]}
+          <Blurb>{CATEGORY_QUIP[data.mostPopularCategory]}</Blurb>
         </div>
       </div>
     </PixelBackground>

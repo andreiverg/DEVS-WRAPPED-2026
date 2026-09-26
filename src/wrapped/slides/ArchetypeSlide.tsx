@@ -2,6 +2,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
 import { GlitchText } from "../components/GlitchText";
+import { Caption, Blurb } from "../components/Caption";
 import { MascotSlot } from "../components/MascotSlot";
 import { applyEnterExit, useSlideTimeline } from "../engine/Timeline";
 import { ARCHETYPE_BLURB, ARCHETYPE_LABEL } from "../data/archetypeCopy";
@@ -23,7 +24,7 @@ export function ArchetypeSlide({ data, durationMs }: SlideProps) {
   }, durationMs);
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         style={{
           position: "relative",
@@ -38,15 +39,17 @@ export function ArchetypeSlide({ data, durationMs }: SlideProps) {
           textAlign: "center",
         }}
       >
-        <div ref={labelRef}>Your DEVS archetype is</div>
+        <div ref={labelRef}>
+          <Caption>Your DEVS archetype is</Caption>
+        </div>
         <div ref={mascotRef}>
           <MascotSlot archetype={data.archetype} />
         </div>
         <div ref={nameRef}>
-          <GlitchText fontSize={40}>{ARCHETYPE_LABEL[data.archetype]}</GlitchText>
+          <GlitchText durationMs={durationMs} fontSize={46}>{ARCHETYPE_LABEL[data.archetype]}</GlitchText>
         </div>
         <div ref={blurbRef} style={{ maxWidth: "80%" }}>
-          {ARCHETYPE_BLURB[data.archetype]}
+          <Blurb>{ARCHETYPE_BLURB[data.archetype]}</Blurb>
         </div>
       </div>
     </PixelBackground>

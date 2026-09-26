@@ -16,7 +16,7 @@ function NoPrizesYet({ durationMs }: { durationMs: number }) {
   }, durationMs);
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         style={{
           position: "relative",
@@ -30,7 +30,7 @@ function NoPrizesYet({ durationMs }: { durationMs: number }) {
         }}
       >
         <div ref={textRef}>
-          <GlitchText fontSize={40}>No prizes yet — there's always next year</GlitchText>
+          <GlitchText durationMs={durationMs} fontSize={46}>No prizes yet — there's always next year</GlitchText>
         </div>
       </div>
     </PixelBackground>

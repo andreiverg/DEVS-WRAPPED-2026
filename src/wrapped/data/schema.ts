@@ -38,6 +38,14 @@ export interface WrappedStats {
   /** Total events attended this year. Can be 0 (brand-new or inactive member). */
   eventsAttended: number;
 
+  /**
+   * Per-event photo, name and date for this member's attended events, shown
+   * on the corkboard slide. Optional — upstream may not always have photos;
+   * when absent or shorter than `eventsAttended`, the corkboard slide falls
+   * back to a plain count.
+   */
+  attendedEvents?: Array<{ photoUrl: string; name: string; date: string }>;
+
   /** ISO 8601 date string, e.g. "2025-09-14". */
   signupDate: string;
 

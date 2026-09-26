@@ -18,6 +18,7 @@ export interface SafeWrappedStats {
   mostActiveMonth: string | null;
   isNewMember: boolean;
   hasAttendedEvents: boolean;
+  attendedEvents: Array<{ photoUrl: string; name: string; date: string }>;
 
   prizesWon: number;
   eventsByCategory: Record<EventCategory, number>;
@@ -49,6 +50,16 @@ function safeEventsByCategory(
     result[category] = safeNonNegativeInt(raw?.[category]);
   }
   return result;
+}
+
+function safeAttendedEvents(
+  raw: WrappedStats["attendedEvents"],
+): Array<{ photoUrl: string; name: string; date: string }> {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (e): e is { photoUrl: string; name: string; date: string } =>
+      !!e && typeof e.photoUrl === "string" && e.photoUrl.length > 0,
+  );
 }
 
 function computeFavoriteCategory(eventsByCategory: Record<EventCategory, number>): EventCategory {
@@ -114,6 +125,7 @@ export function validateWrappedStats(raw: Partial<WrappedStats>): SafeWrappedSta
     mostActiveMonth: eventsAttended > 0 ? (raw.mostActiveMonth ?? null) : null,
     isNewMember: membershipDurationDays < 30,
     hasAttendedEvents: eventsAttended > 0,
+    attendedEvents: safeAttendedEvents(raw.attendedEvents),
 
     prizesWon: safeNonNegativeInt(raw.prizesWon),
     eventsByCategory,

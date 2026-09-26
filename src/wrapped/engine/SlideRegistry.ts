@@ -8,7 +8,8 @@ import { PopularCategorySlide } from "../slides/PopularCategorySlide";
 import { ExecGrowthSlide } from "../slides/ExecGrowthSlide";
 import { KpopChoreoSlide } from "../slides/KpopChoreoSlide";
 import { TransitionSlide } from "../slides/TransitionSlide";
-import { EventsAttendedSlide } from "../slides/EventsAttendedSlide";
+import { MembershipDurationSlide } from "../slides/MembershipDurationSlide";
+import { EventCorkboardSlide } from "../slides/EventCorkboardSlide";
 import { PrizesWonSlide } from "../slides/PrizesWonSlide";
 import { FavoriteTeamSlide } from "../slides/FavoriteTeamSlide";
 import { ArchetypeSlide } from "../slides/ArchetypeSlide";
@@ -42,38 +43,111 @@ export function clampSlideDuration(durationMs: number): number {
 /**
  * The fixed, ordered sequence of real slides shown for every member: a
  * society-wide recap first, a "now let's talk about you" pivot, then this
- * member's personal stats. SignupDateSlide/MembershipDurationSlide/
- * MostActiveMonthSlide exist but aren't in this default sequence — the
- * current narrative script doesn't call for them, but they're left in
- * `../slides` to drop back in if wanted.
+ * member's personal stats. SignupDateSlide/MostActiveMonthSlide exist but
+ * aren't in this default sequence — the current narrative script doesn't
+ * call for them, but they're left in `../slides` to drop back in if wanted.
  */
 export function buildSlideRegistry(): SlideConfig[] {
-  const slides: Array<Omit<SlideConfig, "durationMs"> & { durationMs: number }> = [
+  const slides: Array<
+    Omit<SlideConfig, "durationMs"> & { durationMs: number }
+  > = [
     { id: "intro", durationMs: 4000, component: IntroSlide },
 
     // Society-wide recap — pixel-mosaic dissolve carries every boundary
     // 6500ms (up from 5000ms) — the calendar peel-reveal needs room for its
     // own multi-phase sequence before the count-up + hold.
-    { id: "society-events", durationMs: 6500, component: SocietyEventsSlide, transitionIn: "dissolve" },
-    { id: "joint-events", durationMs: 5000, component: JointEventsSlide, transitionIn: "dissolve" },
-    { id: "attendees", durationMs: 5000, component: AttendeesSlide, transitionIn: "dissolve" },
-    { id: "popular-category", durationMs: 6000, component: PopularCategorySlide, transitionIn: "dissolve" },
-    { id: "exec-growth", durationMs: 5000, component: ExecGrowthSlide, transitionIn: "dissolve" },
-    { id: "kpop-choreos", durationMs: 5000, component: KpopChoreoSlide, transitionIn: "dissolve" },
+    {
+      id: "society-events",
+      durationMs: 6500,
+      component: SocietyEventsSlide,
+      transitionIn: "dissolve",
+    },
+    {
+      id: "joint-events",
+      durationMs: 5000,
+      component: JointEventsSlide,
+      transitionIn: "dissolve",
+    },
+    {
+      id: "attendees",
+      durationMs: 5000,
+      component: AttendeesSlide,
+      transitionIn: "dissolve",
+    },
+    {
+      id: "popular-category",
+      durationMs: 6000,
+      component: PopularCategorySlide,
+      transitionIn: "dissolve",
+    },
+    {
+      id: "exec-growth",
+      durationMs: 5000,
+      component: ExecGrowthSlide,
+      transitionIn: "dissolve",
+    },
+    {
+      id: "kpop-choreos",
+      durationMs: 5000,
+      component: KpopChoreoSlide,
+      transitionIn: "dissolve",
+    },
 
     // The one CRT snap: "recap complete" -> "now let's talk about you"
-    { id: "transition", durationMs: 3000, component: TransitionSlide, transitionIn: "crt" },
+    {
+      id: "transition",
+      durationMs: 3000,
+      component: TransitionSlide,
+      transitionIn: "crt",
+    },
 
     // Personal — two-speed parallax push carries every boundary
-    { id: "events-attended", durationMs: 6000, component: EventsAttendedSlide, transitionIn: "parallax" },
-    { id: "prizes-won", durationMs: 5000, component: PrizesWonSlide, transitionIn: "parallax" },
-    { id: "favorite-team", durationMs: 6000, component: FavoriteTeamSlide, transitionIn: "parallax" },
-    { id: "archetype", durationMs: 7000, component: ArchetypeSlide, transitionIn: "parallax" },
-    { id: "percentile", durationMs: 5000, component: PercentileSlide, transitionIn: "parallax" },
-
-    { id: "recap", durationMs: 8000, component: RecapSlide, transitionIn: "parallax" },
-    { id: "share", durationMs: 8000, component: ShareSlide, transitionIn: "parallax" },
+    {
+      id: "membership-duration",
+      durationMs: 6000,
+      component: MembershipDurationSlide,
+      transitionIn: "parallax",
+    },
+    {
+      id: "event-corkboard",
+      durationMs: 6500,
+      component: EventCorkboardSlide,
+      transitionIn: "parallax",
+    },
+    {
+      id: "favorite-team",
+      durationMs: 6000,
+      component: FavoriteTeamSlide,
+      transitionIn: "parallax",
+    },
+    {
+      id: "percentile",
+      durationMs: 5000,
+      component: PercentileSlide,
+      transitionIn: "parallax",
+    },
+    {
+      id: "archetype",
+      durationMs: 7000,
+      component: ArchetypeSlide,
+      transitionIn: "parallax",
+    },
+    {
+      id: "recap",
+      durationMs: 8000,
+      component: RecapSlide,
+      transitionIn: "parallax",
+    },
+    {
+      id: "share",
+      durationMs: 8000,
+      component: ShareSlide,
+      transitionIn: "parallax",
+    },
   ];
 
-  return slides.map((s) => ({ ...s, durationMs: clampSlideDuration(s.durationMs) }));
+  return slides.map((s) => ({
+    ...s,
+    durationMs: clampSlideDuration(s.durationMs),
+  }));
 }

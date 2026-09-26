@@ -16,7 +16,7 @@ export function TransitionSlide({ durationMs }: SlideProps) {
   }, durationMs);
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         style={{
           position: "relative",
@@ -30,7 +30,7 @@ export function TransitionSlide({ durationMs }: SlideProps) {
         }}
       >
         <div ref={textRef}>
-          <GlitchText fontSize={40}>Now let's talk about you</GlitchText>
+          <GlitchText durationMs={durationMs} fontSize={46}>Now let's talk about you</GlitchText>
         </div>
       </div>
     </PixelBackground>

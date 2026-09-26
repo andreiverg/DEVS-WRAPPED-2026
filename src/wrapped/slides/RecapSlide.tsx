@@ -1,6 +1,8 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
+import { GlitchText } from "../components/GlitchText";
+import { Caption } from "../components/Caption";
 import { useSlideTimeline } from "../engine/Timeline";
 import { ARCHETYPE_LABEL } from "../data/archetypeCopy";
 import { CATEGORY_LABEL } from "../data/categoryCopy";
@@ -32,16 +34,16 @@ export function RecapSlide({ data, durationMs }: SlideProps) {
     return tl;
   }, durationMs);
 
-  const rows: Array<[string, string]> = [
-    ["Events attended", data.hasAttendedEvents ? String(data.eventsAttended) : "—"],
-    ["Prizes won", data.prizesWon > 0 ? String(data.prizesWon) : "—"],
-    ["Favourite team", CATEGORY_LABEL[data.favoriteCategory]],
-    ["Top", `${data.attendancePercentile}%`],
-    ["DEVS archetype", ARCHETYPE_LABEL[data.archetype]],
+  const rows: Array<[label: string, value: string, isNumeric: boolean]> = [
+    ["Events attended", data.hasAttendedEvents ? String(data.eventsAttended) : "—", true],
+    ["Prizes won", data.prizesWon > 0 ? String(data.prizesWon) : "—", true],
+    ["Favourite team", CATEGORY_LABEL[data.favoriteCategory], false],
+    ["Top", `${data.attendancePercentile}%`, true],
+    ["DEVS archetype", ARCHETYPE_LABEL[data.archetype], false],
   ];
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         ref={rootRef}
         style={{
@@ -55,17 +57,35 @@ export function RecapSlide({ data, durationMs }: SlideProps) {
           padding: 64,
         }}
       >
-        <div data-recap-item style={{ fontSize: 32, marginBottom: 16 }}>
-          {data.yearLabel} Recap
+        <div data-recap-item style={{ marginBottom: 16 }}>
+          <GlitchText durationMs={durationMs} fontSize={36}>{`${data.yearLabel} Recap`}</GlitchText>
         </div>
-        {rows.map(([label, value]) => (
+        {rows.map(([label, value, isNumeric]) => (
           <div
             key={label}
             data-recap-item
-            style={{ display: "flex", justifyContent: "space-between" }}
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}
           >
-            <span>{label}</span>
-            <span>{value}</span>
+            <Caption>{label}</Caption>
+            <span
+              style={
+                isNumeric
+                  ? {
+                      fontFamily: '"Jersey 10", monospace',
+                      fontSize: 34,
+                      color: "#FFFFFF",
+                      textShadow: "0 0 10px rgba(123,63,228,0.8)",
+                    }
+                  : {
+                      fontFamily: '"Space Grotesk", sans-serif',
+                      fontWeight: 700,
+                      fontSize: 28,
+                      color: "#FFFFFF",
+                    }
+              }
+            >
+              {value}
+            </span>
           </div>
         ))}
       </div>

@@ -1,14 +1,10 @@
-import { StatReveal } from "../components/StatReveal";
+import { MountainProgressTracker } from "../components/MountainProgressTracker";
 import type { SlideProps } from "../engine/SlideRegistry";
 
 export function PercentileSlide({ data, durationMs }: SlideProps) {
   return (
-    <StatReveal
-      durationMs={durationMs}
-      label="You were in the top"
-      caption="of attendees this year"
-      value={data.attendancePercentile}
-      suffix="%"
-    />
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <MountainProgressTracker percentile={data.attendancePercentile} durationMs={durationMs} />
+    </div>
   );
 }

@@ -3,6 +3,7 @@ import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
 import { RetroCounter } from "../components/RetroCounter";
 import { GlitchText } from "../components/GlitchText";
+import { Caption } from "../components/Caption";
 import { applyEnterExit, useSlideTimeline } from "../engine/Timeline";
 import type { SlideProps } from "../engine/SlideRegistry";
 
@@ -35,7 +36,7 @@ export function EventsAttendedSlide({ data, durationMs }: SlideProps) {
   }, durationMs);
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         style={{
           position: "relative",
@@ -54,13 +55,13 @@ export function EventsAttendedSlide({ data, durationMs }: SlideProps) {
           ref={labelRef}
           style={{ order: data.hasAttendedEvents ? 2 : 1 }}
         >
-          {data.hasAttendedEvents ? "Events you attended" : "Events attended this year"}
+          <Caption>{data.hasAttendedEvents ? "Events you attended" : "Events attended this year"}</Caption>
         </div>
         <div ref={counterWrapRef} style={{ order: data.hasAttendedEvents ? 1 : 2 }}>
           {data.hasAttendedEvents ? (
             <RetroCounter value={data.eventsAttended} progress={countProgress} suffix=" events" size="hero" />
           ) : (
-            <GlitchText fontSize={32}>Not yet — next year's your year</GlitchText>
+            <GlitchText durationMs={durationMs} fontSize={38}>Not yet — next year's your year</GlitchText>
           )}
         </div>
       </div>

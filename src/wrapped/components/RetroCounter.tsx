@@ -27,9 +27,12 @@ export function RetroCounter({ value, progress, suffix = "", size = "lg", style 
   return (
     <div
       style={{
+        fontFamily: '"Jersey 10", monospace',
         fontSize: SIZE_PX[size],
         fontVariantNumeric: "tabular-nums",
         lineHeight: 1,
+        color: "#FFFFFF",
+        textShadow: "0 0 10px rgba(123,63,228,0.8)",
         ...style,
       }}
     >

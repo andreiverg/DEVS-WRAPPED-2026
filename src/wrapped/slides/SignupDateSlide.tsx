@@ -2,6 +2,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
 import { GlitchText } from "../components/GlitchText";
+import { Caption } from "../components/Caption";
 import { applyEnterExit, useSlideTimeline } from "../engine/Timeline";
 import type { SlideProps } from "../engine/SlideRegistry";
 
@@ -23,7 +24,7 @@ export function SignupDateSlide({ data, durationMs }: SlideProps) {
   }, durationMs);
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         style={{
           position: "relative",
@@ -38,9 +39,11 @@ export function SignupDateSlide({ data, durationMs }: SlideProps) {
           textAlign: "center",
         }}
       >
-        <div ref={labelRef}>You joined {data.societyName} on</div>
+        <div ref={labelRef}>
+          <Caption>You joined {data.societyName} on</Caption>
+        </div>
         <div ref={dateRef}>
-          <GlitchText fontSize={40}>{formatSignupDate(data.signupDate)}</GlitchText>
+          <GlitchText durationMs={durationMs} fontSize={46}>{formatSignupDate(data.signupDate)}</GlitchText>
         </div>
       </div>
     </PixelBackground>

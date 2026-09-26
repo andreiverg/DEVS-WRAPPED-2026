@@ -2,6 +2,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
 import { GlitchText } from "../components/GlitchText";
+import { Caption } from "../components/Caption";
 import { MascotSlot } from "../components/MascotSlot";
 import { PixelButton } from "../components/PixelButton";
 import { applyEnterExit, useSlideTimeline } from "../engine/Timeline";
@@ -17,7 +18,7 @@ export function ShareSlide({ data, durationMs }: SlideProps) {
   }, durationMs);
 
   return (
-    <PixelBackground>
+    <PixelBackground durationMs={durationMs}>
       <div
         ref={rootRef}
         style={{
@@ -34,8 +35,8 @@ export function ShareSlide({ data, durationMs }: SlideProps) {
         }}
       >
         <MascotSlot archetype={data.archetype} size={200} />
-        <GlitchText fontSize={40}>{`Share your ${data.yearLabel} Wrapped`}</GlitchText>
-        <div>{data.societyName}</div>
+        <GlitchText durationMs={durationMs} fontSize={46}>{`Share your ${data.yearLabel} Wrapped`}</GlitchText>
+        <Caption>{data.societyName}</Caption>
         <PixelButton>Share</PixelButton>
       </div>
     </PixelBackground>
