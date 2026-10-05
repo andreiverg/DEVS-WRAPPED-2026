@@ -91,6 +91,14 @@ export interface WrappedStats {
   /** The category with the most total attendance this year. */
   mostPopularCategory: EventCategory;
 
+  /**
+   * Categories ordered by total attendance, most popular first — fills the
+   * 1st/2nd/3rd podium on the popular-category slide. Optional; when absent
+   * the podium leads with `mostPopularCategory` and fills the rest in a
+   * fixed default order.
+   */
+  popularCategoryRanking?: EventCategory[];
+
   /** Number of exec team members this year. */
   execCount: number;
 

@@ -83,7 +83,23 @@ export function useSlideClock(durationMs: number): number {
   return clock.mode === "stepped" ? clock.elapsedMs : liveElapsedMs;
 }
 
-export type SlideTimelineFactory = (durationMs: number) => gsap.core.Timeline;
+/**
+ * Where this slide starts on the whole story's timeline (sum of the
+ * durations before it). Only for visuals that should read as one continuous
+ * world across slides — e.g. PixelBackground's checker drift, so two slides
+ * crossfading over each other show the same checker, not a doubled one.
+ */
+const SlideTimeOffsetContext = createContext(0);
+
+export function SlideTimeOffsetProvider({ offsetMs, children }: { offsetMs: number; children: ReactNode }) {
+  return createElement(SlideTimeOffsetContext.Provider, { value: offsetMs }, children);
+}
+
+export function useSlideTimeOffset(): number {
+  return useContext(SlideTimeOffsetContext);
+}
+
+export type SlideTimelineFactory =(durationMs: number) => gsap.core.Timeline;
 
 export interface SlideTimelineHandle {
   timeline: gsap.core.Timeline;
@@ -157,10 +173,11 @@ export function applyEnterExit(
   timeline: gsap.core.Timeline,
   targets: gsap.TweenTarget,
   durationMs: number,
-  opts: { enterMs?: number; exitMs?: number } = {},
+  opts: { enterMs?: number; exitMs?: number; delayMs?: number } = {},
 ): void {
   const enterS = (opts.enterMs ?? 700) / 1000;
   const exitS = (opts.exitMs ?? 700) / 1000;
+  const delayS = (opts.delayMs ?? 0) / 1000;
   const totalS = durationMs / 1000;
 
   // fromTo with explicit endpoints on both sides — not .from()/.to(), which
@@ -174,12 +191,15 @@ export function applyEnterExit(
     targets,
     { opacity: 0, y: 40 },
     { opacity: 1, y: 0, duration: enterS, ease: "power2.out" },
-    0,
+    delayS,
   );
+  // immediateRender: false — otherwise this exit tween stamps its opacity:1
+  // start state on creation, un-hiding targets that are still waiting out
+  // `delayMs` before their enter.
   timeline.fromTo(
     targets,
     { opacity: 1, y: 0 },
-    { opacity: 0, y: -40, duration: exitS, ease: "power2.in" },
-    Math.max(enterS, totalS - exitS),
+    { opacity: 0, y: -40, duration: exitS, ease: "power2.in", immediateRender: false },
+    Math.max(delayS + enterS, totalS - exitS),
   );
 }

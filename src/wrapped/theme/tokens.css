@@ -8,3 +8,22 @@
 .wrapped-canvas-stage *::after {
   box-sizing: border-box;
 }
+
+/* Display faces from the Figma redesign — not on Google Fonts, served from /public/fonts. */
+@font-face {
+  font-family: "04b_19";
+  src: url("/fonts/04b19.ttf") format("truetype");
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Joystix";
+  src: url("/fonts/joystix-monospace.otf") format("opentype");
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Minecraft";
+  src: url("/fonts/minecraft.ttf") format("truetype");
+  font-display: block;
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import { useSlideClock } from "../engine/Timeline";
+import { useSlideClock, useSlideTimeOffset } from "../engine/Timeline";
 
 /**
  * Shared pixel-art shell behind the "general" slides (intro, the "now let's
@@ -128,6 +128,9 @@ interface PixelBackgroundProps {
 export function PixelBackground({ durationMs, children }: PixelBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const elapsedMs = useSlideClock(durationMs);
+  // Drift on the story-wide clock, so consecutive slides' checkers line up
+  // while they crossfade.
+  const storyMs = useSlideTimeOffset() + elapsedMs;
   const reduced = prefersReducedMotion();
 
   useEffect(() => {
@@ -135,8 +138,8 @@ export function PixelBackground({ durationMs, children }: PixelBackgroundProps) 
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     ctx.imageSmoothingEnabled = false;
-    drawFrame(ctx, elapsedMs / 1000, reduced);
-  }, [elapsedMs, reduced]);
+    drawFrame(ctx, storyMs / 1000, reduced);
+  }, [storyMs, reduced]);
 
   return (
     <div style={wrapperStyle}>

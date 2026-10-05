@@ -3,14 +3,19 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { motion } from "framer-motion";
 import { ProgressBars } from "../components/ProgressBars";
 import { LiveClockProvider } from "./Timeline";
-import { TransitionOverlay } from "./TransitionOverlay";
-import type { TransitionOverlayHandle } from "./TransitionOverlay";
+import { SlideSlot } from "./SlideSlot";
+import { StoryCard, StoryTruss } from "./SharedElements";
+import { TRANSITION_MS, sharedStateAt } from "./transitions";
+import type { SharedElementId } from "./transitions";
+import type { SlideTransition } from "./transitions";
+import { preloadImages } from "./preload";
 import type { SafeWrappedStats } from "../data/validate";
 import type { SlideConfig } from "./SlideRegistry";
 
@@ -34,21 +39,40 @@ interface StoryControllerProps {
 
 const HOLD_THRESHOLD_MS = 180;
 
+/** Comfortably past the longest transition (TRANSITION_MS) before warming up upcoming slides. */
+const PREPARE_AFTER_MS = 1000;
+
+function prefersReducedMotion(): boolean {
+  return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export const StoryController = forwardRef<StoryControllerHandle, StoryControllerProps>(
   function StoryController({ slides, data, onComplete, onExit }, ref) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [progress, setProgress] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
+    /** The outgoing slide, kept mounted underneath while a transition plays. */
+    const [previousIndex, setPreviousIndex] = useState<number | null>(null);
+    const [transition, setTransition] = useState<SlideTransition | null>(null);
 
     const rafRef = useRef<number>(0);
     const startRef = useRef<number | null>(null);
     const pausedAtRef = useRef(0);
     const pointerDownAtRef = useRef<number | null>(null);
     const manualPauseRef = useRef(false);
-    const overlayRef = useRef<TransitionOverlayHandle>(null);
     const isTransitioningRef = useRef(false);
 
     const slide = slides[currentIndex];
+
+    /** Each slide's start on the story-wide timeline (sum of the durations before it). */
+    const offsetsMs = useMemo(() => {
+      let total = 0;
+      return slides.map((s) => {
+        const start = total;
+        total += s.durationMs;
+        return start;
+      });
+    }, [slides]);
 
     const goTo = useCallback(
       (index: number) => {
@@ -61,22 +85,29 @@ export const StoryController = forwardRef<StoryControllerHandle, StoryController
           onComplete?.();
           return;
         }
-        if (isTransitioningRef.current) return;
+        if (isTransitioningRef.current || index === currentIndex) return;
         setProgress(0);
 
-        const kind = slides[index].transitionIn;
-        if (kind && overlayRef.current) {
-          isTransitioningRef.current = true;
-          overlayRef.current
-            .play(kind, () => setCurrentIndex(index))
-            .then(() => {
-              isTransitioningRef.current = false;
-            });
-        } else {
+        // A boundary's transition belongs to the later slide, whichever way
+        // we cross it, so going back replays the same transition in reverse.
+        const direction = index > currentIndex ? 1 : -1;
+        const kind = prefersReducedMotion() ? undefined : slides[Math.max(index, currentIndex)].transitionIn;
+        if (!kind) {
+          setPreviousIndex(null);
           setCurrentIndex(index);
+          return;
         }
+
+        isTransitioningRef.current = true;
+        setTransition({ kind, direction });
+        setPreviousIndex(currentIndex);
+        setCurrentIndex(index);
+        window.setTimeout(() => {
+          setPreviousIndex(null);
+          isTransitioningRef.current = false;
+        }, TRANSITION_MS[kind]);
       },
-      [slides, onComplete],
+      [slides, onComplete, currentIndex],
     );
 
     const next = useCallback(() => goTo(currentIndex + 1), [goTo, currentIndex]);
@@ -93,6 +124,28 @@ export const StoryController = forwardRef<StoryControllerHandle, StoryController
       }),
       [goTo, next, prev],
     );
+
+    // Warm up the next two slides' art while this one plays, so their
+    // images are decoded before their transitions start.
+    useEffect(() => {
+      const upcoming = [currentIndex, currentIndex + 1, currentIndex + 2].map((i) => slides[i]).filter(Boolean);
+      for (const s of upcoming) {
+        if (s.component.preload) preloadImages(s.component.preload);
+      }
+      // Heavier prep (e.g. physics) waits until this slide's own transition
+      // has finished and the page is idle, so it never hitches an animation.
+      const prepare = () => {
+        for (const s of upcoming) s.component.prepare?.(s.durationMs);
+      };
+      let idleHandle: number | undefined;
+      const settleTimer = window.setTimeout(() => {
+        idleHandle = window.requestIdleCallback ? window.requestIdleCallback(prepare) : window.setTimeout(prepare, 0);
+      }, PREPARE_AFTER_MS);
+      return () => {
+        window.clearTimeout(settleTimer);
+        if (idleHandle !== undefined) (window.cancelIdleCallback ?? window.clearTimeout)(idleHandle);
+      };
+    }, [slides, currentIndex]);
 
     // Autoplay: advance current slide's progress until it hits 1, then move on.
     useEffect(() => {
@@ -122,7 +175,13 @@ export const StoryController = forwardRef<StoryControllerHandle, StoryController
     }, [isPaused, currentIndex, slide, goTo]);
 
     if (!slide) return null;
-    const SlideComponent = slide.component;
+    const mountedIndices = previousIndex !== null ? [previousIndex, currentIndex] : [currentIndex];
+    const transitionS = transition ? TRANSITION_MS[transition.kind] / 1000 : 0;
+    const sharedProps = (id: SharedElementId) => ({
+      state: sharedStateAt(slides, currentIndex, id),
+      durationS: transitionS,
+      appearing: previousIndex === null || !slides[previousIndex].shared?.[id],
+    });
 
     return (
       <LiveClockProvider>
@@ -135,9 +194,20 @@ export const StoryController = forwardRef<StoryControllerHandle, StoryController
             if (info.offset.y > 120) onExit?.();
           }}
         >
-          <SlideComponent data={data} durationMs={slide.durationMs} />
+          {mountedIndices.map((i) => (
+            <SlideSlot
+              key={i}
+              slide={slides[i]}
+              data={data}
+              offsetMs={offsetsMs[i]}
+              leaving={i !== currentIndex}
+              transition={previousIndex !== null ? transition : null}
+              animateIn={previousIndex !== null && i === currentIndex}
+            />
+          ))}
 
-          <TransitionOverlay ref={overlayRef} />
+          <StoryTruss {...sharedProps("truss")} />
+          <StoryCard {...sharedProps("card")} />
 
           <ProgressBars count={slides.length} currentIndex={currentIndex} progress={progress} />
 

@@ -18,8 +18,12 @@ A Spotify-Wrapped-style story sequence for society stats.
 
 Tap zones: left third = previous slide, center third = pause/resume, right
 third = next slide. Press-and-hold pauses. Swipe down exits. Slides
-auto-advance on a timer with a fade in/out; transitions between slides are a
-plain fade (see `TransitionOverlay`).
+auto-advance on a timer. Each slide's `transitionIn` picks how it arrives
+(`engine/SlideSlot.tsx`): a crossfade over the outgoing slide (`dissolve`),
+an old-TV power-on (`crt`), or a two-speed push (`parallax`). Slides with a
+stat card share one card (`engine/StoryCard.tsx`) that morphs between their
+`card` boxes, so it carries over while only the text on it changes; slides
+put that text on it with `<OnCard>`.
 
 ## Design system — "Arcade Wrapped"
 

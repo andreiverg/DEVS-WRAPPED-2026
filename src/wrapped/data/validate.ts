@@ -30,6 +30,8 @@ export interface SafeWrappedStats {
   jointEventsHeld: number;
   totalAttendeesAcrossEvents: number;
   mostPopularCategory: EventCategory;
+  /** All four categories, most popular first; always leads with mostPopularCategory. */
+  popularCategoryRanking: EventCategory[];
   execCount: number;
   kpopChoreosTaught: number;
 }
@@ -60,6 +62,15 @@ function safeAttendedEvents(
     (e): e is { photoUrl: string; name: string; date: string } =>
       !!e && typeof e.photoUrl === "string" && e.photoUrl.length > 0,
   );
+}
+
+/** Fallback order for podium places the payload doesn't rank. */
+const DEFAULT_RANKING_ORDER: readonly EventCategory[] = ["social", "competitions", "tech", "industry"];
+
+function safePopularCategoryRanking(raw: unknown, mostPopular: EventCategory): EventCategory[] {
+  const given = Array.isArray(raw) ? raw.filter(isKnownCategory) : [];
+  const ordered = [mostPopular, ...given, ...DEFAULT_RANKING_ORDER];
+  return ordered.filter((category, i) => ordered.indexOf(category) === i);
 }
 
 function computeFavoriteCategory(eventsByCategory: Record<EventCategory, number>): EventCategory {
@@ -108,6 +119,8 @@ export function validateWrappedStats(raw: Partial<WrappedStats>): SafeWrappedSta
   const eventsByCategory = safeEventsByCategory(raw.eventsByCategory);
   const favoriteCategory = computeFavoriteCategory(eventsByCategory);
 
+  const mostPopularCategory = isKnownCategory(raw.mostPopularCategory) ? raw.mostPopularCategory : DEFAULT_CATEGORY;
+
   const attendancePercentile = Number.isFinite(raw.attendancePercentile)
     ? Math.min(100, Math.max(1, Math.trunc(raw.attendancePercentile as number)))
     : 100;
@@ -136,7 +149,8 @@ export function validateWrappedStats(raw: Partial<WrappedStats>): SafeWrappedSta
     societyEventsHeld: safeNonNegativeInt(raw.societyEventsHeld),
     jointEventsHeld: safeNonNegativeInt(raw.jointEventsHeld),
     totalAttendeesAcrossEvents: safeNonNegativeInt(raw.totalAttendeesAcrossEvents),
-    mostPopularCategory: isKnownCategory(raw.mostPopularCategory) ? raw.mostPopularCategory : DEFAULT_CATEGORY,
+    mostPopularCategory,
+    popularCategoryRanking: safePopularCategoryRanking(raw.popularCategoryRanking, mostPopularCategory),
     execCount: safeNonNegativeInt(raw.execCount),
     kpopChoreosTaught: safeNonNegativeInt(raw.kpopChoreosTaught),
   };

@@ -35,6 +35,7 @@ export const SAMPLE_STATS: WrappedStats = {
   jointEventsHeld: 18,
   totalAttendeesAcrossEvents: 3120,
   mostPopularCategory: "industry",
+  popularCategoryRanking: ["industry", "social", "competitions", "tech"],
   execCount: 24,
   kpopChoreosTaught: 5,
 };

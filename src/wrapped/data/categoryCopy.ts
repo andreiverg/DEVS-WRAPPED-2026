@@ -7,6 +7,14 @@ export const CATEGORY_LABEL: Record<EventCategory, string> = {
   social: "Social",
 };
 
+/** Short form for tight spots like the popular-category podium. */
+export const CATEGORY_SHORT_LABEL: Record<EventCategory, string> = {
+  tech: "Tech",
+  industry: "Industry",
+  competitions: "Comps",
+  social: "Social",
+};
+
 /** Flavor line following a category reveal, e.g. "...you guys really wanted those internships huh." */
 export const CATEGORY_QUIP: Record<EventCategory, string> = {
   tech: "clearly you can't get enough of building things.",
