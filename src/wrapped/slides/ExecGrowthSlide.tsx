@@ -4,17 +4,15 @@ import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
 import { OnCard } from "../components/OnCard";
 import { CenteredText, Layer } from "../components/Placed";
-import { PhysicsDrop, type DropBody } from "../components/PhysicsDrop";
-import { getDropTrack } from "../components/dropSimulation";
 import { countUpValue, useCountUp } from "../components/useCountUp";
-import { applyEnterExit, useSlideTimeline } from "../engine/Timeline";
+import { applyEnterExit, useSlideClock, useSlideTimeline } from "../engine/Timeline";
 import type { SlideProps } from "../engine/SlideRegistry";
 
 /**
  * Exec headshots. Each entry is the circle's Figma position and diameter
  * (x, y, size) plus where the photo sits inside that circle (dx, dy, w, h),
- * so off-center or non-square photos keep the framing chosen in Figma. Only
- * the diameter and framing are used now — the circles drop in under physics.
+ * so off-center or non-square photos keep the framing chosen in Figma. The
+ * Figma positions are the reduced-motion layout; otherwise the circles fall.
  */
 type Headshot = [x: number, y: number, size: number, dx: number, dy: number, w: number, h: number];
 
@@ -59,34 +57,114 @@ const HEADSHOTS: Headshot[] = [
 const PHOTO_EXT: Record<number, string> = { 7: "jpg", 10: "jpg", 15: "jpg" };
 const photoSrc = (n: number) => `/wrapped/exec-growth/exec-${String(n).padStart(2, "0")}.${PHOTO_EXT[n] ?? "png"}`;
 
-const DROP_COLUMNS = 5;
+// Headshot rain: the photos are scattered at random (seeded, so it's the
+// same every play) over a tall sheet that drifts down through the frame and
+// off the bottom (no floor), so every exec gets a few seconds on screen.
+// A pure function of the slide clock.
+const SCATTER_SEED = 2026;
+/** Space between neighbouring photos — more than two opposite sways (2 x SWAY_PX), so faces never overlap. */
+const SCATTER_GAP = 24;
+/** Photos may hang this far off the side edges. */
+const EDGE_BLEED = 30;
+const SWAY_PX = 10;
+const TILT_DEG = 5;
+/** Leave the card's exit at the end of the slide with the last photo just clearing the frame. */
+const CLEAR_BY_END_S = 0.4;
+
+/** Small deterministic PRNG (LCG) so the scatter is identical on every play and in export. */
+function seededRandom(seed: number) {
+  let state = seed >>> 0;
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 0x100000000;
+  };
+}
 
 /**
- * Headshots start in staggered columns above the frame, each a little higher
- * than the last, so they rain down in sequence and pile up at the bottom.
+ * Random non-overlapping centers for every headshot on a sheet 1080 wide and
+ * as tall as it needs to be: try random spots, and if one won't fit after
+ * enough tries, make the sheet a little taller.
  */
-const HEADSHOT_BODIES: DropBody[] = HEADSHOTS.map(([, , size, dx, dy, w, h], i) => {
-  const column = i % DROP_COLUMNS;
-  const row = Math.floor(i / DROP_COLUMNS);
-  const jitter = ((i * 37) % 60) - 30;
-  return {
-    shape: "circle",
-    width: size,
-    height: size,
-    x: 110 + column * 215 + jitter,
-    y: -150 - row * 230 - column * 45,
-    content: (
-      <div style={{ position: "relative", width: size, height: size, borderRadius: "50%", overflow: "hidden" }}>
-        <img
-          src={photoSrc(i + 1)}
-          alt=""
-          draggable={false}
-          style={{ position: "absolute", left: dx, top: dy, width: w, height: h, maxWidth: "none", objectFit: "cover" }}
-        />
-      </div>
-    ),
-  };
-});
+function scatterHeadshots() {
+  const rand = seededRandom(SCATTER_SEED);
+  const radii = HEADSHOTS.map(([, , size]) => size / 2);
+  let sheetHeight = 1800;
+  for (;;) {
+    const placed: Array<{ x: number; y: number; r: number }> = [];
+    const fits = radii.every((r) => {
+      for (let attempt = 0; attempt < 400; attempt++) {
+        const x = r - EDGE_BLEED + rand() * (1080 - 2 * (r - EDGE_BLEED));
+        const y = r + rand() * (sheetHeight - 2 * r);
+        if (placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + SCATTER_GAP)) {
+          placed.push({ x, y, r });
+          return true;
+        }
+      }
+      return false;
+    });
+    if (fits) return { centers: placed, sheetHeight };
+    sheetHeight += 150;
+  }
+}
+
+const SCATTER = scatterHeadshots();
+
+function prefersReducedMotion(): boolean {
+  return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function Headshot({ n, dx, dy, w, h }: { n: number; dx: number; dy: number; w: number; h: number }) {
+  return (
+    <div style={{ position: "absolute", inset: 0, borderRadius: "50%", overflow: "hidden" }}>
+      <img
+        src={photoSrc(n)}
+        alt=""
+        draggable={false}
+        style={{ position: "absolute", left: dx, top: dy, width: w, height: h, maxWidth: "none", objectFit: "cover" }}
+      />
+    </div>
+  );
+}
+
+function FallingHeadshots({ durationMs }: { durationMs: number }) {
+  const elapsedMs = useSlideClock(durationMs);
+  const reduced = prefersReducedMotion();
+  const t = elapsedMs / 1000;
+  // The sheet starts just above the frame and travels until its top clears the
+  // bottom edge by the end; speed comes from the slide length, so retiming the
+  // slide keeps every photo passing through.
+  const travel = SCATTER.sheetHeight + 1920;
+  const sheetTop = -SCATTER.sheetHeight + (travel / Math.max(1, durationMs / 1000 - CLEAR_BY_END_S)) * t;
+
+  return (
+    <Layer>
+      {HEADSHOTS.map(([fx, fy, size, dx, dy, w, h], i) => {
+        const { x: cx, y: cy } = SCATTER.centers[i];
+        const phase = i * 1.7;
+        const x = reduced ? fx : cx - size / 2 + SWAY_PX * Math.sin(t * 1.3 + phase);
+        const y = reduced ? fy : sheetTop + cy - size / 2;
+        const tilt = reduced ? 0 : TILT_DEG * Math.sin(t * 0.9 + phase);
+        if (y > 1920 || y < -size) return null;
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: size,
+              height: size,
+              transform: `translate(${x}px, ${y}px) rotate(${tilt}deg)`,
+              willChange: "transform",
+            }}
+          >
+            <Headshot n={i + 1} dx={dx} dy={dy} w={w} h={h} />
+          </div>
+        );
+      })}
+    </Layer>
+  );
+}
 
 const interBold: CSSProperties = { fontFamily: '"Inter", sans-serif', fontWeight: 700, fontSize: 32, lineHeight: 1.5 };
 
@@ -102,7 +180,7 @@ export function ExecGrowthSlide({ data, durationMs }: SlideProps) {
 
   return (
     <PixelBackground durationMs={durationMs}>
-      <PhysicsDrop bodies={HEADSHOT_BODIES} durationMs={durationMs} />
+      <FallingHeadshots durationMs={durationMs} />
 
       <OnCard>
         <Layer ref={cardRef}>
@@ -126,6 +204,3 @@ export function ExecGrowthSlide({ data, durationMs }: SlideProps) {
 }
 
 ExecGrowthSlide.preload = HEADSHOTS.map((_, i) => photoSrc(i + 1));
-ExecGrowthSlide.prepare = (durationMs: number) => {
-  getDropTrack(HEADSHOT_BODIES, durationMs);
-};

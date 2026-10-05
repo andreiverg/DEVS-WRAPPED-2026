@@ -118,7 +118,7 @@ export function buildSlideRegistry(): SlideConfig[] {
     },
     {
       id: "exec-growth",
-      durationMs: 5000,
+      durationMs: 8000, // long enough for every exec's photo to drift past
       component: ExecGrowthSlide,
       transitionIn: "dissolve",
       shared: { card: EXEC_GROWTH_CARD },
