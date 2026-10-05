@@ -26,13 +26,21 @@ export interface DropBody {
 export const STEP_MS = 1000 / 60;
 const WALL = 400;
 
+export interface DropOptions {
+  /** Canvas y of the floor the pile settles on. Defaults to the bottom edge. */
+  floorY?: number;
+  /** When set, the floor drops away at this point in the slide and the pile falls out of frame. */
+  floorOpensAtMs?: number;
+}
+
 /** Per frame, per body: x, y, angle (radians). */
-function simulate(bodies: DropBody[], frames: number, floorY: number): Float32Array {
+function simulate(bodies: DropBody[], frames: number, { floorY = CANVAS_HEIGHT, floorOpensAtMs }: DropOptions): Float32Array {
   const engine = Matter.Engine.create({ gravity: { x: 0, y: 1.8 } });
   const material = { restitution: 0.25, friction: 0.5, frictionAir: 0.008 };
 
+  const floor = Matter.Bodies.rectangle(CANVAS_WIDTH / 2, floorY + WALL / 2, CANVAS_WIDTH + WALL * 2, WALL, { isStatic: true });
   const bounds = [
-    Matter.Bodies.rectangle(CANVAS_WIDTH / 2, floorY + WALL / 2, CANVAS_WIDTH + WALL * 2, WALL, { isStatic: true }),
+    floor,
     Matter.Bodies.rectangle(-WALL / 2, 0, WALL, CANVAS_HEIGHT * 6, { isStatic: true }),
     Matter.Bodies.rectangle(CANVAS_WIDTH + WALL / 2, 0, WALL, CANVAS_HEIGHT * 6, { isStatic: true }),
   ];
@@ -44,8 +52,10 @@ function simulate(bodies: DropBody[], frames: number, floorY: number): Float32Ar
   });
   Matter.Composite.add(engine.world, [...bounds, ...dynamic]);
 
+  const openFrame = floorOpensAtMs === undefined ? Infinity : Math.round(floorOpensAtMs / STEP_MS);
   const out = new Float32Array(frames * bodies.length * 3);
   for (let f = 0; f < frames; f++) {
+    if (f === openFrame) Matter.Composite.remove(engine.world, floor);
     dynamic.forEach((body, i) => {
       const o = (f * bodies.length + i) * 3;
       out[o] = body.position.x;
@@ -57,17 +67,17 @@ function simulate(bodies: DropBody[], frames: number, floorY: number): Float32Ar
   return out;
 }
 
-/** Simulations by body set, then by `${frames}:${floorY}` — each drop is only ever simulated once. */
+/** Simulations by body set, then by frame count + options — each drop is only ever simulated once. */
 const tracks = new WeakMap<DropBody[], Map<string, Float32Array>>();
 
 /** The precomputed drop for these bodies; simulates on first request, cached after. */
-export function getDropTrack(bodies: DropBody[], durationMs: number, floorY = CANVAS_HEIGHT): Float32Array {
+export function getDropTrack(bodies: DropBody[], durationMs: number, options: DropOptions = {}): Float32Array {
   const frames = dropFrameCount(durationMs);
-  const key = `${frames}:${floorY}`;
+  const key = `${frames}:${options.floorY ?? CANVAS_HEIGHT}:${options.floorOpensAtMs ?? "closed"}`;
   let byKey = tracks.get(bodies);
   if (!byKey) tracks.set(bodies, (byKey = new Map()));
   let track = byKey.get(key);
-  if (!track) byKey.set(key, (track = simulate(bodies, frames, floorY)));
+  if (!track) byKey.set(key, (track = simulate(bodies, frames, options)));
   return track;
 }
 

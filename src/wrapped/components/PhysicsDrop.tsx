@@ -15,6 +15,8 @@ interface PhysicsDropProps {
   durationMs: number;
   /** Canvas y of the floor the pile settles on. Defaults to the bottom edge. */
   floorY?: number;
+  /** When set, the floor drops away at this point in the slide and the pile falls out of frame. */
+  floorOpensAtMs?: number;
 }
 
 /**
@@ -25,11 +27,14 @@ interface PhysicsDropProps {
  * identically live or under the stepped export clock (same contract as
  * MountainProgressTracker / EventCorkboard).
  */
-export function PhysicsDrop({ bodies, durationMs, floorY = CANVAS_HEIGHT }: PhysicsDropProps) {
+export function PhysicsDrop({ bodies, durationMs, floorY = CANVAS_HEIGHT, floorOpensAtMs }: PhysicsDropProps) {
   const elapsedMs = useSlideClock(durationMs);
   const frames = dropFrameCount(durationMs);
   // Usually already simulated during the previous slide (see slide `prepare`).
-  const track = useMemo(() => getDropTrack(bodies, durationMs, floorY), [bodies, durationMs, floorY]);
+  const track = useMemo(
+    () => getDropTrack(bodies, durationMs, { floorY, floorOpensAtMs }),
+    [bodies, durationMs, floorY, floorOpensAtMs],
+  );
 
   // Reduced motion skips the fall and shows the settled pile.
   const frame = prefersReducedMotion() ? frames - 1 : Math.min(frames - 1, Math.max(0, Math.floor(elapsedMs / STEP_MS)));
