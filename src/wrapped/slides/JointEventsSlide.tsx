@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
-import { SocietyStatCard } from "../components/SocietyStatCard";
+import { StatCard } from "../components/StatCard";
 import { PlacedImage } from "../components/Placed";
 import { PhysicsDrop, type DropBody } from "../components/PhysicsDrop";
 import { getDropTrack } from "../components/dropSimulation";
@@ -92,7 +92,7 @@ export function JointEventsSlide({ data, durationMs }: SlideProps) {
     <PixelBackground durationMs={durationMs}>
       <PhysicsDrop bodies={LOGOS} durationMs={durationMs} />
 
-      <SocietyStatCard
+      <StatCard
         ref={cardRef}
         label="WE ALSO MADE NEW FRIENDS, HOSTING"
         value={countUpValue(data.jointEventsHeld, progress)}
