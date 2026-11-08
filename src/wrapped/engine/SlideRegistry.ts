@@ -59,6 +59,14 @@ const SOCIETY_EVENTS_CARD: CardBox = { left: 107, top: 695, width: 866, height: 
 const JOINT_EVENTS_CARD: CardBox = { left: 107, top: 689.5, width: 866, height: 541 };
 const EXEC_GROWTH_CARD: CardBox = { left: 58, top: 768, width: 964, height: 364 };
 
+// Personal stats reuse the same card, so it carries from one stat to the
+// next: up top over the level-up bar / photo collage / rank ladder, down
+// under the archetype select screen, stretched tall for the recap, then
+// back into the intro's logo card to close.
+const PERSONAL_TOP_CARD: CardBox = { left: 107, top: 170, width: 866, height: 541 };
+const ARCHETYPE_CARD: CardBox = { left: 107, top: 1200, width: 866, height: 480 };
+const RECAP_CARD: CardBox = { left: 85, top: 240, width: 909, height: 1180 };
+
 // Spotlight truss: the same rig over the concert stage, then pulled back and
 // scaled up over the podium (same aspect ratio, so it's a pure move + scale).
 const ATTENDEES_TRUSS: CardBox = { left: -14, top: -32, width: 1107, height: 919 };
@@ -133,7 +141,7 @@ export function buildSlideRegistry(): SlideConfig[] {
     // The one CRT snap: "recap complete" -> "now let's talk about you"
     {
       id: "transition",
-      durationMs: 3000,
+      durationMs: 4000, // room to read the typed-out line before it leaves
       component: TransitionSlide,
       transitionIn: "crt",
     },
@@ -144,42 +152,49 @@ export function buildSlideRegistry(): SlideConfig[] {
       durationMs: 6000,
       component: MembershipDurationSlide,
       transitionIn: "parallax",
+      shared: { card: PERSONAL_TOP_CARD },
     },
     {
       id: "event-corkboard",
       durationMs: 6500,
       component: EventCorkboardSlide,
       transitionIn: "parallax",
+      shared: { card: PERSONAL_TOP_CARD },
     },
     {
       id: "favorite-team",
       durationMs: 6000,
       component: FavoriteTeamSlide,
       transitionIn: "parallax",
+      shared: { truss: ATTENDEES_TRUSS },
     },
     {
       id: "percentile",
-      durationMs: 5000,
+      durationMs: 5500, // the "you" marker hops up the ladder before the hold
       component: PercentileSlide,
       transitionIn: "parallax",
+      shared: { card: PERSONAL_TOP_CARD },
     },
     {
       id: "archetype",
       durationMs: 7000,
       component: ArchetypeSlide,
       transitionIn: "parallax",
+      shared: { card: ARCHETYPE_CARD },
     },
     {
       id: "recap",
       durationMs: 8000,
       component: RecapSlide,
       transitionIn: "parallax",
+      shared: { card: RECAP_CARD },
     },
     {
       id: "share",
       durationMs: 8000,
       component: ShareSlide,
       transitionIn: "parallax",
+      shared: { card: INTRO_CARD },
     },
   ];
 

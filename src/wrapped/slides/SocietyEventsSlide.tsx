@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { PixelBackground } from "../components/PixelBackground";
-import { SocietyStatCard } from "../components/SocietyStatCard";
+import { StatCard } from "../components/StatCard";
 import { Layer, PlacedImage } from "../components/Placed";
 import { countUpValue, useCountUp } from "../components/useCountUp";
 import { applyEnterExit, useSlideClock, useSlideTimeline } from "../engine/Timeline";
@@ -104,7 +104,7 @@ export function SocietyEventsSlide({ data, durationMs }: SlideProps) {
       </Layer>
       <div style={{ position: "absolute", left: 0, top: 0, width: 1081, height: 1932, background: "rgba(17,9,28,0.4)" }} />
 
-      <SocietyStatCard
+      <StatCard
         ref={cardRef}
         label="THIS YEAR WE HELD"
         value={countUpValue(data.societyEventsHeld, progress)}
