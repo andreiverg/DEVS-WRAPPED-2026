@@ -133,7 +133,7 @@ export function buildSlideRegistry(): SlideConfig[] {
     // The one CRT snap: "recap complete" -> "now let's talk about you"
     {
       id: "transition",
-      durationMs: 3000,
+      durationMs: 4000, // room to read the typed-out line before it leaves
       component: TransitionSlide,
       transitionIn: "crt",
     },
